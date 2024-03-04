@@ -6,10 +6,11 @@ import {
   createBrowserRouter,
   redirect,
 } from 'react-router-dom';
-import PageLayout from '../layout/PageLayout';
+import PageLayout from './layout/PageLayout.tsx';
 import Login from './pages/login/Login.tsx';
 import Home from './pages/home/Home.tsx';
 import { message } from 'antd';
+import './style/index.less';
 
 const redirectIfUser = () => {
   const user = localStorage.getItem('user');

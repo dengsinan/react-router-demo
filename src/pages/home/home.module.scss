@@ -1,0 +1,9 @@
+.outer {
+  border: 1px solid chocolate;
+  width: 200px;
+  color: aqua;
+
+  :global(.inner) {
+    color: rgb(239, 86, 104);
+  }
+}
