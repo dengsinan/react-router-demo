@@ -1,0 +1,16 @@
+.shiki {
+  padding: 20px;
+  .line-number {
+    display: inline-block;
+    text-align: right;
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+    margin-right: 0.25rem;
+    color: #c7c7c5;
+  }
+
+  > code {
+    display: flex;
+    font-family: Consolas, Monaco, Andale Mono, Ubuntu Mono, monospace;
+  }
+}

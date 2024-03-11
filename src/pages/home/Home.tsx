@@ -1,6 +1,7 @@
 import React from 'react';
 import StyleTest from '../../components/StyleTest';
 import styles from './home.module.scss';
+import Shiki from '../../components/shiki/Shiki';
 
 type HomeProps = {};
 
@@ -19,6 +20,8 @@ const Home: React.FC<HomeProps> = props => {
           excepturi quaerat commodi, repellendus fugit impedit.
         </div>
       </div>
+
+      <Shiki />
     </>
   );
 };
