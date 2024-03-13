@@ -2,6 +2,7 @@ import React from 'react';
 import StyleTest from '../../components/StyleTest';
 import styles from './home.module.scss';
 import Shiki from '../../components/shiki/Shiki';
+import ContextDemo from '../../components/ContextDemo/ContextDemo';
 
 type HomeProps = {};
 
@@ -10,7 +11,7 @@ const Home: React.FC<HomeProps> = props => {
 
   return (
     <>
-      <p>Home</p>
+      {/* <p>Home</p>
       <StyleTest />
       <div className={styles.outer}>
         Lorem, ipsum dolor sit amet consectetur adipisicing elit. Similique
@@ -21,7 +22,8 @@ const Home: React.FC<HomeProps> = props => {
         </div>
       </div>
 
-      <Shiki />
+      <Shiki /> */}
+      <ContextDemo />
     </>
   );
 };
