@@ -1,9 +1,10 @@
 import { Button, Drawer, Space } from '@arco-design/web-react';
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { Tabs } from '@arco-design/web-react';
 import TestEditTable from './TestEditTable';
 import { useStep } from './useStep';
 import { PayloadInfo, TestContext } from './constants';
+import TestTree from './TestTree';
 const TabPane = Tabs.TabPane;
 
 type TestDrawerProps = {
@@ -48,16 +49,23 @@ const TestDrawer: React.FC<TestDrawerProps> = props => {
     );
   };
 
+  const [selectedTasks, setSelectedTasks] = useState<any[]>([]);
+
+  function updateSelectedTasks(tasks: any[]) {
+    setSelectedTasks(tasks);
+  }
+
   return (
     <>
       <Drawer width={'50%'} title="Test" footer={<Footer />} visible={visible}>
         <Tabs activeTab={step as string} type="capsule">
           <TabPane key={DrawerStep.one} title="Tab 1" disabled>
-            step 1
+            <TestTree updateSelectedTasks={updateSelectedTasks} />
           </TabPane>
 
           <TabPane key={DrawerStep.two} title="Tab 2" disabled>
             <TestEditTable
+              selectedTasks={selectedTasks}
               updateToSave={value => {
                 tableDataToSave.current = value;
               }}

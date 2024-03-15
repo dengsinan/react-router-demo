@@ -121,10 +121,13 @@ function EditableCell(props: RowCallbackProps) {
 
 type TestEditTableProps = {
   updateToSave: (value: PayloadInfo[]) => void;
+  selectedTasks: any[];
 };
 
 const TestEditTable: React.FC<TestEditTableProps> = props => {
-  const { updateToSave } = props;
+  const { updateToSave, selectedTasks } = props;
+
+  console.log(`selectedTasks`, selectedTasks);
 
   const [data, setData] = useState<RootObject[]>([
     {
