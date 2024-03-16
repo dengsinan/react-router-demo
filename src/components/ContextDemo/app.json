@@ -1,0 +1,80 @@
+[
+  {
+    "projectId": 15,
+    "projectName": "项目A",
+    "executionVoList": [
+      {
+        "executionId": 17,
+        "executionName": "执行A",
+        "storyVoList": [
+          {
+            "storyId": 4,
+            "storyName": "产品A-研发需求A",
+            "userTaskVoList": [
+              {
+                "taskId": 8,
+                "taskName": "任务A",
+                "type": 0,
+                "parent": 0,
+                "assignedTo": "super",
+                "status": "wait",
+                "left": 0,
+                "estimate": 0,
+                "consumed": 0,
+                "userTaskVoList": []
+              }
+            ]
+          }
+        ],
+        "userTaskVoList": [
+          {
+            "taskId": 9,
+            "taskName": "任务B",
+            "type": 0,
+            "parent": 0,
+            "assignedTo": "super",
+            "status": "wait",
+            "left": 0,
+            "estimate": 0,
+            "consumed": 0,
+            "userTaskVoList": []
+          }
+        ]
+      },
+      {
+        "executionId": 18,
+        "executionName": "执行B",
+        "storyVoList": [],
+        "userTaskVoList": [
+          {
+            "taskId": 11,
+            "taskName": "任务D",
+            "type": 0,
+            "parent": 0,
+            "assignedTo": "super",
+            "status": "wait",
+            "left": 0,
+            "estimate": 0,
+            "consumed": 0,
+            "userTaskVoList": []
+          }
+        ]
+      }
+    ],
+    "storyVoList": [],
+    "userTaskVoList": [
+      {
+        "taskId": 12,
+        "taskName": "任务E",
+        "type": 0,
+        "parent": 0,
+        "assignedTo": "super",
+        "status": "wait",
+        "left": 0,
+        "estimate": 0,
+        "consumed": 0,
+        "userTaskVoList": []
+      }
+    ]
+  }
+]
