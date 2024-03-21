@@ -1,7 +1,7 @@
 import { Button, Drawer, Space } from '@arco-design/web-react';
 import React, { useContext, useRef, useState } from 'react';
 import { Tabs } from '@arco-design/web-react';
-import TestEditTable from './TestEditTable';
+import TestEditTable, { TestEditTableInstance } from './TestEditTable';
 import { useStep } from './useStep';
 import { PayloadInfo, TestContext } from './constants';
 import TestTree from './TestTree';
@@ -24,9 +24,14 @@ const TestDrawer: React.FC<TestDrawerProps> = props => {
 
   const tableDataToSave = useRef<PayloadInfo[]>([]);
 
-  const handleSubmit = () => {
-    testContext.updateExpandValue?.([...tableDataToSave.current]);
-    updateVisible(false);
+  const editTableRef = useRef<TestEditTableInstance | null>(null);
+
+  const handleSubmit = async () => {
+    await editTableRef.current?.validateForm();
+    console.log('handle Submit');
+
+    // testContext.updateExpandValue?.([...tableDataToSave.current]);
+    // updateVisible(false);
   };
 
   const { step, isFirstStep, isLastStep, handlePrev, handleNext } = useStep(
@@ -69,6 +74,7 @@ const TestDrawer: React.FC<TestDrawerProps> = props => {
               updateToSave={value => {
                 tableDataToSave.current = value;
               }}
+              ref={editTableRef}
             />
           </TabPane>
         </Tabs>
