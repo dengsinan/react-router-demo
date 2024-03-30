@@ -2,7 +2,7 @@ import React from 'react';
 import StyleTest from '../../components/StyleTest';
 import styles from './home.module.scss';
 import Shiki from '../../components/shiki/Shiki';
-import ContextDemo from '../../components/ContextDemo/ContextDemo';
+import LaborTable from '../../components/LaborTable/LaborTable';
 
 type HomeProps = {};
 
@@ -23,7 +23,7 @@ const Home: React.FC<HomeProps> = props => {
       </div>
 
       <Shiki /> */}
-      <ContextDemo />
+      <LaborTable />
     </>
   );
 };
