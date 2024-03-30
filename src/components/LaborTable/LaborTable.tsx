@@ -19,7 +19,7 @@ const LaborTable: React.FC = () => {
           taskId: 1,
           taskName: '首页相关功能开发',
           parent: 0,
-          consumed: 4,
+          consumed: 2,
         },
         {
           projectId: 12,
@@ -28,7 +28,7 @@ const LaborTable: React.FC = () => {
           taskId: 20,
           taskName: '规则集管理页面测试',
           parent: 0,
-          consumed: 0,
+          consumed: 4,
         },
       ],
     },
@@ -42,13 +42,15 @@ const LaborTable: React.FC = () => {
 
   const [laborTaskList, setLaborTaskList] = useState<TaskItemVo[]>();
 
-  // const updateLaborTaskList = (payload: LaborTaskItem[]) => {
-  //   setLaborList(
-  //     laborList.map(i =>
-  //       i.key === currentLaborId.current ? { ...i, taskList: [...payload] } : i
-  //     )
-  //   );
-  // };
+  const updateLaborTaskList = (payload: TaskItemVo[]) => {
+    setLaborList(
+      laborList.map(i =>
+        i.id === currentLaborId.current
+          ? { ...i, taskItemVoList: [...payload] }
+          : i
+      )
+    );
+  };
 
   const [visible, { set }] = useBoolean(false);
 
@@ -66,12 +68,15 @@ const LaborTable: React.FC = () => {
 
           <Button
             type="outline"
-            icon={taskItemVoList?.length ? <IconEdit /> : <IconPlus />}
+            icon={taskItemVoList ? <IconEdit /> : <IconPlus />}
             onClick={e => {
               e.stopPropagation();
               currentLaborId.current = id;
-              if (taskItemVoList?.length) {
+              console.log(`taskItemVoList`, taskItemVoList);
+              if (taskItemVoList) {
                 setLaborTaskList([...taskItemVoList]);
+              } else {
+                setLaborTaskList([]);
               }
               set(true);
             }}
@@ -83,7 +88,7 @@ const LaborTable: React.FC = () => {
 
   return (
     <>
-      <LaborContext.Provider value={{ laborTaskList }}>
+      <LaborContext.Provider value={{ laborTaskList, updateLaborTaskList }}>
         <Table
           rowKey="id"
           columns={columns}

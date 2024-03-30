@@ -1,14 +1,10 @@
 import { Button, Drawer, Message, Space } from '@arco-design/web-react';
-import React, {
-  Ref,
-  RefObject,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import TaskEditTable, { TaskEditTableRowInstance } from './TaskEditTable';
-import { TaskItemVo, LaborContext, Task } from './constants';
+import React, { RefObject, useContext, useRef, useState } from 'react';
+import TaskEditTable, {
+  TaskEditTableInstance,
+  TaskEditTableRowInstance,
+} from './TaskEditTable';
+import { LaborContext, TaskItemVo } from './constants';
 import TaskTree, { TaskTreeInstance } from './TaskTree';
 import { TreeDataType } from '@arco-design/web-react/es/Tree/interface';
 
@@ -25,19 +21,22 @@ enum LaborTaskStep {
 const TaskDrawer: React.FC<TaskDrawerProps> = props => {
   const { visible, updateVisible } = props;
 
-  const { laborTaskList } = useContext(LaborContext);
-
-  const treeRef: RefObject<TaskTreeInstance> = useRef(null);
-
-  const editTableRef: RefObject<TaskEditTableRowInstance> = useRef(null);
+  const { updateLaborTaskList } = useContext(LaborContext);
 
   const [step, setStep] = useState<LaborTaskStep>(LaborTaskStep.selectTask);
 
   // 当前选中的任务 在 tree 和 table 之间互通
   const [selectedTasks, setSelectedTasks] = useState<TreeDataType[]>([]);
 
-  function handleNext() {
+  const treeRef: RefObject<TaskTreeInstance> = useRef(null);
+
+  const editTableRef: RefObject<TaskEditTableInstance> = useRef(null);
+
+  const editTableRowRef: RefObject<TaskEditTableRowInstance> = useRef(null);
+
+  async function handleNext() {
     if (step === LaborTaskStep.selectTask) {
+      // 获取已选择的任务
       const tasks = treeRef.current!.getSelectedTasks();
 
       setSelectedTasks(tasks);
@@ -49,7 +48,23 @@ const TaskDrawer: React.FC<TaskDrawerProps> = props => {
 
       setStep(LaborTaskStep.editLaborHour);
     } else if (step === LaborTaskStep.editLaborHour) {
-      111;
+      // 表单校验
+      await editTableRowRef.current?.valid();
+      // 获取编辑后的表格数据
+      const data = editTableRef.current?.getSavedTask();
+      console.log(`data`, data);
+
+      // 更新外部 table 展开数据
+      if (data) {
+        updateLaborTaskList?.(
+          data.map(i => {
+            const { title, children, ...rest } = i;
+            return rest as TaskItemVo;
+          })
+        );
+
+        updateVisible(false);
+      }
     }
   }
 
@@ -71,16 +86,6 @@ const TaskDrawer: React.FC<TaskDrawerProps> = props => {
     );
   };
 
-  // 默认选中 keys
-  const defaultCheckedKeys = useMemo(() => {
-    return (
-      laborTaskList?.map(
-        ({ projectId, storyId, taskId }) =>
-          `-${[projectId, storyId, taskId].filter(i => i).join('-')}`
-      ) || []
-    );
-  }, [laborTaskList]);
-
   return (
     <>
       <Drawer
@@ -89,18 +94,21 @@ const TaskDrawer: React.FC<TaskDrawerProps> = props => {
         footer={<Footer />}
         visible={visible}
         closable
+        onCancel={() => updateVisible(false)}
       >
-        {step === LaborTaskStep.selectTask && (
-          <TaskTree treeRef={treeRef} defaultCheckedKeys={defaultCheckedKeys} />
-        )}
+        <div
+          style={{
+            display: step === LaborTaskStep.selectTask ? 'block' : 'none',
+          }}
+        >
+          <TaskTree treeRef={treeRef} />
+        </div>
 
         {step === LaborTaskStep.editLaborHour && selectedTasks.length > 0 && (
           <TaskEditTable
             selectedTasks={selectedTasks}
-            updateToSave={value => {
-              tableDataToSave.current = value;
-            }}
-            ref={editTableRef}
+            tableRef={editTableRef}
+            rowRef={editTableRowRef}
           />
         )}
       </Drawer>

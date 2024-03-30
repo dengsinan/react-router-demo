@@ -1,5 +1,6 @@
 import React, {
   Ref,
+  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -9,10 +10,9 @@ import { Space, Tag, Tree } from '@arco-design/web-react';
 import { TreeDataType } from '@arco-design/web-react/es/Tree/interface';
 import { cloneDeep, uniqueId } from 'lodash-es';
 import apiData from './app.json';
-import { TaskNode, UserTaskVo } from './constants';
+import { LaborContext, TaskNode, UserTaskVo } from './constants';
 
 interface TaskTreeProps {
-  defaultCheckedKeys: string[];
   treeRef: Ref<TaskTreeInstance>;
 }
 
@@ -26,7 +26,9 @@ const useTaskList = () => {
 };
 
 const TaskTree: React.FC<TaskTreeProps> = props => {
-  const { defaultCheckedKeys, treeRef } = props;
+  const { treeRef } = props;
+
+  const { laborTaskList } = useContext(LaborContext);
 
   // 接口数据
   const { data } = useTaskList();
@@ -38,6 +40,16 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
   useEffect(() => {
     setTaskList(cloneDeep(data).map(i => taskToTreeNode(i)));
   }, [data]);
+
+  // 默认选中 keys
+  const defaultCheckedKeys = useMemo(() => {
+    return (
+      laborTaskList?.map(
+        ({ projectId, storyId, taskId }) =>
+          `-${[projectId, storyId, taskId].filter(i => i).join('-')}`
+      ) || []
+    );
+  }, [laborTaskList]);
 
   // 当前选中的 keys
   const [checkedKeys, setCheckKeys] = useState<string[]>(defaultCheckedKeys);
@@ -54,32 +66,6 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
     };
   });
 
-  // function checkedNodeFilter(taskNode: TaskNode): boolean {
-  //   if (taskNode.taskId) {
-  //     return checkedKeys.includes(`taskId-${taskNode.taskId}`);
-  //   }
-
-  //   if (taskNode.executionVoList?.length) {
-  //     taskNode.executionVoList =
-  //       taskNode.executionVoList.filter(checkedNodeFilter);
-  //   }
-
-  //   if (taskNode.storyVoList?.length) {
-  //     taskNode.storyVoList = taskNode.storyVoList.filter(checkedNodeFilter);
-  //   }
-
-  //   if (taskNode.userTaskVoList?.length) {
-  //     taskNode.userTaskVoList =
-  //       taskNode.userTaskVoList.filter(checkedNodeFilter);
-  //   }
-
-  //   return (
-  //     !!taskNode.userTaskVoList?.length ||
-  //     !!taskNode.storyVoList?.length ||
-  //     !!taskNode.executionVoList?.length
-  //   );
-  // }
-
   function checkedNodeFilter(taskTreeNode: TreeDataType): boolean {
     if (taskTreeNode.isLeaf) {
       return !!(
@@ -94,6 +80,66 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
     }
   }
 
+  // 任务 -> 树节点
+  function taskToTreeNode(taskNode: TaskNode, _key: string = '') {
+    const {
+      projectName,
+      executionName,
+      storyName,
+      taskName,
+      projectId,
+      executionId,
+      storyId,
+      taskId,
+      executionVoList,
+      storyVoList,
+      userTaskVoList,
+      status,
+    } = taskNode;
+
+    _key = _key + '-' + (taskId ?? executionId ?? storyId ?? projectId);
+
+    const node: TreeDataType = {
+      title: (
+        <Space>
+          <span>{taskName || storyName || executionName || projectName}</span>
+          {taskId && <Tag>{status}</Tag>}
+        </Space>
+      ),
+      key: _key,
+      isLeaf: !!taskId,
+      children: [],
+      checkable: !!taskId,
+      projectId,
+      projectName,
+      executionId,
+      executionName,
+      storyId,
+      storyName,
+      taskId,
+      taskName,
+      consumed: taskId ? 0 : undefined, // 提前准备编辑时需要的数据
+      // 默认选中及其额外信息赋值
+      ...(defaultCheckedKeys.includes(_key)
+        ? laborTaskList?.find(i => i.taskId === taskId) || {}
+        : {}),
+    };
+
+    if (executionVoList) {
+      node.children!.push(...executionVoList.map(i => taskToTreeNode(i, _key)));
+    }
+
+    if (storyVoList) {
+      node.children!.push(...storyVoList.map(i => taskToTreeNode(i, _key)));
+    }
+
+    if (userTaskVoList) {
+      node.children!.push(...userTaskVoList.map(i => taskToTreeNode(i, _key)));
+    }
+
+    return node;
+  }
+
   return (
     <>
       {taskList && (
@@ -106,60 +152,5 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
     </>
   );
 };
-
-// 任务 -> 树节点
-function taskToTreeNode(taskNode: TaskNode, _key: string = '') {
-  const {
-    projectName,
-    executionName,
-    storyName,
-    taskName,
-    projectId,
-    executionId,
-    storyId,
-    taskId,
-    executionVoList,
-    storyVoList,
-    userTaskVoList,
-    status,
-  } = taskNode;
-
-  _key = _key + '-' + (taskId ?? executionId ?? storyId ?? projectId);
-
-  const node: TreeDataType = {
-    title: (
-      <Space>
-        <span>{taskName || storyName || executionName || projectName}</span>
-        {taskId && <Tag>{status}</Tag>}
-      </Space>
-    ),
-    key: _key,
-    isLeaf: !!taskId,
-    children: [],
-    checkable: !!taskId,
-    projectId,
-    projectName,
-    executionId,
-    executionName,
-    storyId,
-    storyName,
-    taskId,
-    taskName,
-  };
-
-  if (executionVoList) {
-    node.children!.push(...executionVoList.map(i => taskToTreeNode(i, _key)));
-  }
-
-  if (storyVoList) {
-    node.children!.push(...storyVoList.map(i => taskToTreeNode(i, _key)));
-  }
-
-  if (userTaskVoList) {
-    node.children!.push(...userTaskVoList.map(i => taskToTreeNode(i, _key)));
-  }
-
-  return node;
-}
 
 export default TaskTree;

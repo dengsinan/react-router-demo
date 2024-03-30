@@ -5,39 +5,39 @@ import React, {
   useContext,
   useCallback,
   useImperativeHandle,
-  forwardRef,
   FC,
   Ref,
 } from 'react';
 import {
   Table,
-  Input,
   Form,
   FormInstance,
-  Space,
+  TableColumnProps,
+  InputNumber,
 } from '@arco-design/web-react';
 import { RefInputType } from '@arco-design/web-react/es/Input';
-import { TaskItemVo, Task } from './constants';
-import { ColumnProps } from '@arco-design/web-react/es/Table';
 import { RowCallbackProps } from '@arco-design/web-react/es/Table/interface';
-import { Button } from 'antd';
 import { TreeDataType } from '@arco-design/web-react/es/Tree/interface';
+import { useUpdate } from 'ahooks';
 
 const FormItem = Form.Item;
-const EditableContext = React.createContext<{ getForm?: () => FormInstance }>(
-  {}
-);
+
+const EditableContext = React.createContext<{
+  getForm?: () => FormInstance;
+  update?: () => void;
+}>({});
 
 function EditableCell(props: RowCallbackProps) {
+  const leaveTiem = 1;
+  const weeks: boolean = true;
   const { children, className, rowData, column, onHandleSave } = props;
   const ref = useRef<HTMLDivElement>(null);
   const refInput = useRef<RefInputType>(null);
-  const { getForm } = useContext(EditableContext);
+  const { getForm, update } = useContext(EditableContext);
   const [editing, setEditing] = useState(false);
-  const handleClick = useCallback(
-    (e: any) => {
-      // console.log('body click');
 
+  const handleClick = useCallback(
+    (e: MouseEvent) => {
       if (
         editing &&
         column.editable &&
@@ -52,31 +52,22 @@ function EditableCell(props: RowCallbackProps) {
   );
 
   useEffect(() => {
-    editing && refInput.current && refInput.current.focus();
+    if (editing) {
+      refInput.current && refInput.current.focus();
+      update?.();
+    }
   }, [editing]);
 
   useEffect(() => {
-    document.addEventListener('click', handleClick);
+    document.addEventListener('click', handleClick, true);
     return () => {
-      document.removeEventListener('click', handleClick);
+      document.removeEventListener('click', handleClick, true);
     };
   }, [handleClick]);
 
-  const cellValueChangeHandler = async (value: RootObject) => {
-    const form = getForm!();
-    // console.log(`cell form`, form.getFieldValue('school'), form.getFields());
-
-    // 报错 Error: form validate error, get errors by error.errors
-    // await form.validate();
-    // .then(res => {
-    //   console.log(`cell form res`, res);
-    // })
-    // .catch(err => {
-    //   console.log(`cell form err`, err);
-    // });
-
-    form.validate([column.dataIndex], (errors, values) => {
-      // console.log(`cell err`, errors);
+  const cellValueChangeHandler = (value: number) => {
+    const form = getForm?.();
+    form?.validate([column.dataIndex], (errors, values) => {
       if (!errors || !errors[column.dataIndex]) {
         setEditing(!editing);
         onHandleSave && onHandleSave({ ...rowData, ...values });
@@ -85,34 +76,52 @@ function EditableCell(props: RowCallbackProps) {
   };
 
   if (editing) {
-    return (
-      <>
+    if (column.dataIndex === 'consumed' && rowData.children.length === 0) {
+      return (
         <div ref={ref}>
-          <FormItem
-            style={{ marginBottom: 0 }}
-            labelCol={{ span: 0 }}
-            wrapperCol={{ span: 24 }}
-            initialValue={rowData[column.dataIndex]}
-            field={column.dataIndex}
-            rules={[
-              { required: true, message: '数据不能为空' },
-              {
-                validator(value, callback) {
-                  if (+value > 10) {
-                    callback('校验失败');
-                  }
+          {
+            <FormItem
+              style={{ marginBottom: 0 }}
+              labelCol={{ span: 0 }}
+              wrapperCol={{ span: 24 }}
+              initialValue={rowData[column.dataIndex]}
+              field={column.dataIndex}
+              required
+              rules={[
+                {
+                  type: 'number',
+                  required: true,
+                  validator: (value, cb) => {
+                    if (value > 8 && !weeks) {
+                      return cb('不能超过8小时');
+                    } else if (value === 0 || !value) {
+                      return cb('请正确分配当日工时');
+                    } else if (!/^(\d+(\.\d{1,2})?)$/.test(value)) {
+                      return cb('不能超过两位小数点');
+                    } else if (value + leaveTiem > 8) {
+                      return cb('当前工时填报有误');
+                    }
+                    // else if (value > rowData.left) {
+                    //   return cb('不能大于剩余工时');
+                    // }
+                  },
                 },
-              },
-            ]}
-          >
-            <Input ref={refInput} onPressEnter={cellValueChangeHandler} />
-          </FormItem>
+              ]}
+            >
+              <InputNumber
+                ref={refInput}
+                autoComplete="new-password"
+                size="small"
+                onKeyDown={e => {
+                  // @ts-expect-error  xxx
+                  e.keyCode! === 13 && cellValueChangeHandler(e.target.value);
+                }}
+              />
+            </FormItem>
+          }
         </div>
-        {/* <Button type="primary" onClick={handleClick}>
-          cell save
-        </Button> */}
-      </>
-    );
+      );
+    }
   }
 
   return (
@@ -127,136 +136,152 @@ function EditableCell(props: RowCallbackProps) {
 
 type TaskEditTableProps = {
   selectedTasks: TreeDataType[];
+  tableRef: Ref<TaskEditTableInstance>;
   rowRef: Ref<TaskEditTableRowInstance>;
 };
 
+export type TaskEditTableInstance = {
+  getSavedTask: () => TreeDataType[];
+};
+
 export type TaskEditTableRowInstance = {
-  validateForm: () => Promise<void>;
+  valid: () => Promise<void>;
 };
 
 const TaskEditTable: FC<TaskEditTableProps> = props => {
-  const { selectedTasks, rowRef } = props;
+  const { selectedTasks, tableRef, rowRef } = props;
 
   console.log(`selectedTasks`, selectedTasks);
 
-  function EditableRow(props: RowCallbackProps) {
-    const { children, className, ...rest } = props;
-    const refForm = useRef<FormInstance>(null);
+  const EditableRow = (props: RowCallbackProps) => {
+    const { children, record, className, ...rest } = props;
+    const refForm = useRef<FormInstance | null>(null);
+    const update = useUpdate();
 
-    const getForm = () => refForm.current!;
+    const getForm = () => refForm.current;
 
-    useImperativeHandle(rowRef, () => {
-      return {
-        validateForm: async () => {
-          // const err = await getForm().validate();
-          // console.log(`form err`, err);
-          const form = getForm();
-          console.log(
-            `drawer form`,
-            form.getFieldValue('school'),
-            form.getFields(),
-            form.getInnerMethods(true).innerGetFieldValue('school')
-          );
-          await form.validate();
-
-          // form.validate(['school'], err => {
-          //   console.log(`drawer school err`, err);
-          // });
-        },
-        errFn() {
-          console.log('form child');
-
-          throw new Error('来自子元素');
-        },
-        clickFn: handleClick,
-      };
-    });
-
-    // 报错
-    async function handleClick() {
-      // const form = getForm();
-      const form = refForm.current!;
-      console.log(`form`, form.getFieldValue('school'), form.getFields());
-      // 报错 Error: form validate error, get errors by error.errors
-      const err = await form.validate();
-      console.log(`form err`, err);
-    }
+    useImperativeHandle(rowRef, () => ({
+      valid: async () => {
+        const form = getForm?.();
+        await form?.validate();
+      },
+    }));
 
     return (
-      <>
-        <EditableContext.Provider
-          value={{
-            getForm,
-          }}
-        >
-          <Form
-            style={{ display: 'table-row' }}
-            children={children}
-            ref={refForm}
-            wrapper="tr"
-            wrapperProps={rest}
-            className={`${className} editable-row`}
-          />
-
-          <Button type="default" onClick={handleClick}>
-            form save
-          </Button>
-        </EditableContext.Provider>
-      </>
+      <EditableContext.Provider
+        value={{
+          // @ts-expect-error xxxx
+          getForm,
+          update,
+        }}
+      >
+        <Form
+          style={{ display: 'table-row' }}
+          children={children}
+          ref={refForm}
+          wrapper="tr"
+          wrapperProps={rest}
+          className={`${className} editable-row`}
+        />
+      </EditableContext.Provider>
     );
-  }
+  };
 
-  const [data, setData] = useState<TreeDataType[]>(selectedTasks.map(i => i));
+  const [editTasks, setEditTask] = useState<TreeDataType[]>(selectedTasks);
 
-  const columns: ColumnProps<TreeDataType>[] = [
+  const columns: TableColumnProps<TreeDataType>[] = [
     {
-      title: 'Name',
-      dataIndex: 'name',
+      title: '任务',
+      dataIndex: 'title',
+      fixed: 'left',
+      width: 220,
+      ellipsis: true,
     },
     {
-      title: 'Salary',
-      dataIndex: 'salary',
+      title: '剩余工时',
+      dataIndex: 'left',
+      width: 200,
     },
     {
-      title: '工时',
-      dataIndex: 'hour',
+      title: '当日分配工时',
+      dataIndex: 'consumed',
       editable: true,
-      onCell: () => ({
-        onHandleSave: handleSave,
-      }),
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-    },
-    {
-      title: 'Operation',
-      dataIndex: 'op',
+      width: 200,
     },
   ];
 
-  function handleSave(row: TreeDataType) {
-    const newData = [...data];
-    const index = newData.findIndex(item => row.key === item.key);
-    newData.splice(index, 1, { ...newData[index], ...row });
-    setData(newData);
-
-    console.log(`row`, row);
-    updateToSave([{ taskName: row.school }]);
+  function updateConsumedByKey(
+    data: TreeDataType[],
+    key: string,
+    newData: number
+  ): TreeDataType[] {
+    return data.map(item => {
+      if (item.key === key) {
+        return {
+          ...item,
+          consumed: newData,
+        };
+      }
+      if (item.children) {
+        return {
+          ...item,
+          children: updateConsumedByKey(item.children, key, newData),
+        };
+      }
+      return item;
+    });
   }
+
+  function handleSave(row: TreeDataType) {
+    const newData = updateConsumedByKey([...editTasks], row.key!, row.consumed);
+    setEditTask(newData);
+  }
+
+  useImperativeHandle(tableRef, () => {
+    return {
+      // 获取编辑后拍平的任务列表
+      getSavedTask() {
+        const res: TreeDataType[] = [];
+
+        function getTask(i: TreeDataType) {
+          if (i.taskId) {
+            res.push(i);
+          }
+
+          if (i.children) {
+            i.children.forEach(getTask);
+          }
+        }
+
+        editTasks.forEach(getTask);
+
+        return res;
+      },
+    };
+  });
 
   return (
     <>
       <Table
-        data={data}
+        data={editTasks}
         components={{
           body: {
             row: EditableRow,
             cell: EditableCell,
           },
         }}
-        columns={columns}
+        columns={columns.map(column =>
+          column.editable
+            ? {
+                ...column,
+                onCell: () => ({
+                  onHandleSave: handleSave,
+                }),
+              }
+            : column
+        )}
         className="table-demo-editable-cell"
+        defaultExpandAllRows={true}
       />
     </>
   );
