@@ -95,6 +95,7 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
       storyVoList,
       userTaskVoList,
       status,
+      type,
     } = taskNode;
 
     _key = _key + '-' + (taskId ?? executionId ?? storyId ?? projectId);
@@ -107,7 +108,9 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
         </Space>
       ),
       key: _key,
-      isLeaf: !!taskId,
+      isLeaf:
+        !!taskId &&
+        ((type === 1 && userTaskVoList?.length === 0) || type === 0),
       children: [],
       checkable: !!taskId,
       projectId,
