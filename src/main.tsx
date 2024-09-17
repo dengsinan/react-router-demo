@@ -22,7 +22,7 @@ const redirectIfUser = () => {
   return null;
 };
 
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,

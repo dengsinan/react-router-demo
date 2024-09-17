@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import React from 'react';
 import { redirect, useNavigate } from 'react-router';
+import { router } from '../../main';
 
 type LoginProps = {};
 
@@ -17,6 +18,12 @@ const Login: React.FC<LoginProps> = props => {
         username: 'admin',
       })
     );
+    setTimeout(() => {
+      router.routes[1].children?.push({
+        path: '/projects',
+        element: <div>项目列表 需要权限</div>,
+      });
+    }, 1000);
     navigate('/');
   }
 

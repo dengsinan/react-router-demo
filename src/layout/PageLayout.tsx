@@ -1,6 +1,7 @@
 import { Button, Space } from 'antd';
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router';
+import { Link } from 'react-router-dom';
 
 type PageLayoutProps = {};
 
@@ -34,6 +35,8 @@ const PageLayout: React.FC<PageLayoutProps> = props => {
         style={{ border: '1px solid black', padding: '20px' }}
       >
         这是内容区
+        <Link to="/home">Home</Link>
+        <Link to="/projects">Projects</Link>
         <Outlet />
       </main>
     </>

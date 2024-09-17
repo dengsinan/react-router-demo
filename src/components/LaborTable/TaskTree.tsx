@@ -108,11 +108,16 @@ const TaskTree: React.FC<TaskTreeProps> = props => {
         </Space>
       ),
       key: _key,
+      // isLeaf:
+      //   !!taskId &&
+      //   ((type === 1 && userTaskVoList?.length === 0) || type === 0),
       isLeaf:
-        !!taskId &&
-        ((type === 1 && userTaskVoList?.length === 0) || type === 0),
+        (!!taskId && type === 1 && userTaskVoList?.length === 0) ||
+        (!!taskId && type === 0),
       children: [],
-      checkable: !!taskId,
+      checkable:
+        (!!taskId && type === 1 && userTaskVoList?.length === 0) ||
+        (!!taskId && type === 0),
       projectId,
       projectName,
       executionId,
